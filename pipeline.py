@@ -313,7 +313,14 @@ elif step == steps[4]:
         y = pd.to_numeric(y, errors='coerce')
         y = y.fillna(y.mean())
     else:
-        y = y.fillna("Unknown").astype("category").cat.codes
+        problem = st.session_state.problem
+
+        if problem == "Regression":
+            y = pd.to_numeric(y, errors='coerce')
+            y = y.fillna(y.mean())
+        else:
+            y = y.astype(str)  # ✅ prevent weird encoding issues
+            y = y.fillna("Unknown").astype("category").cat.codes
 
     col1, col2 = st.columns(2)
 
@@ -391,6 +398,9 @@ elif step == steps[5]:
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, random_state=42
     )
+    if len(np.unique(y_train)) < 2:
+        st.error("❌ After split: Only one class in training data")
+        st.stop()
 
     st.session_state.X_train = X_train
     st.session_state.X_test = X_test
@@ -457,6 +467,18 @@ elif step == steps[7]:
             st.balloons()
 
         else:
+            # ✅ CHECK TARGET VALIDITY BEFORE TRAINING
+            unique_classes = np.unique(y_train)
+            
+            if model_name in ["Logistic", "SVM", "RandomForest"]:
+                
+                if len(unique_classes) < 2:
+                    st.error("❌ Training failed: Only 1 class present in data")
+                    st.stop()
+            
+                if len(unique_classes) > 0.5 * len(y_train):
+                    st.warning("⚠️ Too many unique values in target → may be regression problem")
+            
             model.fit(X_train, y_train)
 
             from sklearn.model_selection import KFold
