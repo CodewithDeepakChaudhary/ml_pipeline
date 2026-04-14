@@ -9,28 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.cluster import KMeans, DBSCAN
-
-# =========================
-# ✅ SESSION STATE INIT (FIX)
-# =========================
-# ✅ SESSION STATE INIT
-defaults = {
-    "data": None,
-    "target": None,
-    "problem": None,
-    "X": None,
-    "y": None,
-    "X_train": None,
-    "X_test": None,
-    "y_train": None,
-    "y_test": None,
-    "model": None,
-    "model_name": None
-}
-
-for key, value in defaults.items():
-    if key not in st.session_state:
-        st.session_state[key] = value
+from sklearn.metrics import accuracy_score, mean_squared_error
 
 # =========================
 # 🎨 UI STYLE
@@ -39,40 +18,167 @@ st.set_page_config(layout="wide")
 
 st.markdown("""
 <style>
-.stApp {background: linear-gradient(135deg, #e3f2fd, #ffffff);}
-h1 {text-align: center;color: #0d47a1;font-weight: bold;}
-h3 {text-align: center;color: #1565c0;}
-section[data-testid="stSidebar"] {background: linear-gradient(180deg, #1976d2, #42a5f5);}
-section[data-testid="stSidebar"] h1, h2, h3 {color: white;}
-.sidebar-steps {background: white;padding: 15px;border-radius: 15px;color: black !important;}
-.stButton > button {background: linear-gradient(to right, #1976d2, #42a5f5);color: white;border-radius: 12px;}
-.card {padding: 18px;border-radius: 15px;background: #f5faff;}
+
+/* ===== BACKGROUND ===== */
+.stApp {
+    background: linear-gradient(135deg, #e3f2fd, #ffffff);
+}
+
+/* ===== MAIN TITLE ===== */
+h1 {
+    text-align: center;
+    color: #0d47a1;
+    font-weight: bold;
+}
+
+/* ===== SUBTITLE ===== */
+h3 {
+    text-align: center;
+    color: #1565c0;
+}
+
+/* ===== SIDEBAR ===== */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #1976d2, #42a5f5);
+}
+
+/* ===== SIDEBAR TEXT VISIBLE ===== */
+/* Sidebar title only white */
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    color: white;
+}
+
+/* Steps card text black */
+.sidebar-steps {
+    background: white;
+    padding: 15px;
+    border-radius: 15px;
+    color: black !important;
+}
+
+/* Radio text visible */
+.sidebar-steps label {
+    color: black !important;
+}
+
+/* ===== SIDEBAR STEPS BOX ===== */
+.sidebar-steps {
+    background: white;
+    padding: 15px;
+    border-radius: 15px;
+    color: black !important;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+}
+
+/* ===== RADIO BUTTON TEXT ===== */
+.stRadio label {
+    color: black !important;
+    font-weight: 500;
+}
+
+/* ===== ACTIVE STEP ===== */
+.stRadio div[role="radiogroup"] label[data-checked="true"] {
+    font-weight: bold;
+    color: #d32f2f !important;
+}
+
+/* ===== BUTTONS ===== */
+.stButton > button {
+    background: linear-gradient(to right, #1976d2, #42a5f5);
+    color: white;
+    border-radius: 12px;
+    padding: 8px 20px;
+    font-size: 16px;
+    border: none;
+    transition: 0.3s;
+}
+
+.stButton > button:hover {
+    background: linear-gradient(to right, #1565c0, #1e88e5);
+    transform: scale(1.05);
+}
+
+/* ===== CARD UI ===== */
+.card {
+    padding: 18px;
+    border-radius: 15px;
+    background: #f5faff;
+    box-shadow: 0px 6px 15px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+}
+
+/* ===== METRIC BOX ===== */
+.metric-box {
+    padding: 12px;
+    border-radius: 12px;
+    background: #e1f5fe;
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* ===== SUCCESS ===== */
+.stSuccess {
+    background-color: #e8f5e9 !important;
+    border-radius: 10px;
+}
+
+/* ===== ERROR ===== */
+.stError {
+    background-color: #ffebee !important;
+    border-radius: 10px;
+}
+
+/* ===== SELECTBOX ===== */
+.stSelectbox div {
+    border-radius: 10px;
+}
+
+/* ===== RADIO BUTTON ===== */
+.stRadio > div {
+    padding: 10px;
+    border-radius: 10px;
+    background: #f1f8ff;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
+# ===== HEADER =====
 st.markdown("<h1>🚀 ML Pipeline Dashboard</h1>", unsafe_allow_html=True)
 st.markdown("<h3>📊 End-to-End Machine Learning Automation System</h3>", unsafe_allow_html=True)
-
 # =========================
 # STEPS
 # =========================
 steps = [
-    "1. Problem Type","2. Dataset","3. EDA","4. Cleaning",
-    "5. Feature Selection","6. Split","7. Model","8. Training","9. Metrics"
+    "1. Problem Type",
+    "2. Dataset",
+    "3. EDA",
+    "4. Cleaning",
+    "5. Feature Selection",
+    "6. Split",
+    "7. Model",
+    "8. Training",
+    "9. Metrics",
 ]
 
 with st.sidebar:
-    st.markdown("### ⚙️ Steps")
-    st.markdown("<div class='sidebar-steps'>", unsafe_allow_html=True)
-    step = st.radio("", steps)
-    st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown("### ⚙️ Steps")
+
+    st.markdown("<div class='sidebar-steps'>", unsafe_allow_html=True)
+
+    step = st.radio("", steps)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 # =========================
 # STEP 1
 # =========================
 if step == steps[0]:
-    st.session_state.problem = st.radio("Select Problem Type",
-                                       ["Classification", "Regression", "Clustering"])
+    problem = st.radio("Select Problem Type", ["Classification", "Regression", "Clustering"])
+    st.session_state.problem = problem
 
 # =========================
 # STEP 2
@@ -86,7 +192,9 @@ elif step == steps[1]:
         df = pd.read_csv("Location_Wise_Student_Data.csv")
 
     st.session_state.data = df
-    st.session_state.target = st.selectbox("Select Target Column", df.columns)
+
+    target = st.selectbox("Select Target Column", df.columns)
+    st.session_state.target = target
 
     st.dataframe(df.head())
 
@@ -94,163 +202,413 @@ elif step == steps[1]:
 # STEP 3
 # =========================
 elif step == steps[2]:
-
-    if st.session_state.data is None:
-        st.warning("⚠️ Please upload dataset first")
-        st.stop()
-
     df = st.session_state.data
+
+    st.markdown('<div class="card">📊 Exploratory Data Analysis</div>', unsafe_allow_html=True)
+
     st.dataframe(df.head())
     st.write(df.describe())
 
 # =========================
-# STEP 4
+# STEP 4 CLEANING
 # =========================
 elif step == steps[3]:
 
-    if st.session_state.data is None:
-        st.warning("⚠️ Upload dataset first")
-        st.stop()
+    st.markdown("""
+    <div style='padding:15px; border-radius:10px; background-color:#f0f2f6'>
+        <h3>🧹 Data Cleaning</h3>
+    </div>
+    """, unsafe_allow_html=True)
 
+    # ✅ MUST DEFINE df HERE
     df = st.session_state.data.copy()
 
-    if st.checkbox("Fill Missing (Mean)"):
-        df = df.fillna(df.mean(numeric_only=True))
+    col1, col2 = st.columns(2)
 
+    # ---------------- MISSING VALUES ----------------
+    with col1:
+        st.markdown("### 🧩 Missing Values Handling")
+
+        option = st.selectbox(
+            "Choose Method",
+            ["None", "Mean", "Median", "Mode"]
+        )
+
+        if option == "Mean":
+            df = df.fillna(df.mean(numeric_only=True))
+            st.success("✅ Filled with Mean")
+
+        elif option == "Median":
+            df = df.fillna(df.median(numeric_only=True))
+            st.success("✅ Filled with Median")
+
+        elif option == "Mode":
+            df = df.fillna(df.mode().iloc[0])
+            st.success("✅ Filled with Mode")
+
+        else:
+            st.info("No missing value handling")
+
+    # ---------------- OUTLIER ----------------
+    with col2:
+        st.markdown("### 🚨 Outlier Handling")
+
+        outlier = st.checkbox("Remove Outliers (IQR Method)")
+
+        if outlier:
+
+            num_df = df.select_dtypes(include='number')
+
+            if num_df.shape[1] == 0:
+                st.warning("⚠️ No numeric columns for outlier removal")
+            else:
+                Q1 = num_df.quantile(0.25)
+                Q3 = num_df.quantile(0.75)
+                IQR = Q3 - Q1
+
+                mask = ~((num_df < (Q1 - 1.5 * IQR)) | (num_df > (Q3 + 1.5 * IQR))).any(axis=1)
+
+                df = df[mask]
+
+                st.success("✅ Outliers Removed Successfully")
+
+    # ✅ SAVE BACK (VERY IMPORTANT)
     st.session_state.data = df
-    st.write(df.shape)
 
+    # ---------------- SUCCESS UI ----------------
+    st.markdown("""
+    <div style='padding:10px; border-radius:10px; background-color:#d4edda'>
+        <b>🎉 Cleaning Done Successfully</b>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.write("📊 Shape after cleaning:", df.shape)
 # =========================
-# STEP 5
+# STEP 5 FEATURE SELECTION
 # =========================
 elif step == steps[4]:
 
-    if st.session_state.data is None or st.session_state.target is None:
-        st.warning("⚠️ Complete Step 2 first")
-        st.stop()
+    st.markdown("""
+    <div style='padding:15px; border-radius:10px; background-color:#eef6ff'>
+        <h3>🔍 Feature Selection</h3>
+    </div>
+    """, unsafe_allow_html=True)
 
     df = st.session_state.data
     target = st.session_state.target
 
-    X = df.drop(columns=[target], errors='ignore')
+    if target not in df.columns:
+        st.error("Target column missing ❌")
+        st.stop()
+
+    X = df.drop(columns=[target, "StudentID"], errors='ignore')
     y = df[target]
 
-    X = pd.get_dummies(X).fillna(0)
-    y = y.astype("category").cat.codes
+    # Encoding
+    X = pd.get_dummies(X)
+    X = X.fillna(0)
+    problem = st.session_state.problem
 
-    method = st.selectbox("Method", ["None", "Variance", "ANOVA"])
+    if problem == "Regression":
+        y = pd.to_numeric(y, errors='coerce')
+        y = y.fillna(y.mean())
+    else:
+        y = y.fillna("Unknown").astype("category").cat.codes
 
-    if method == "Variance":
-        selector = VarianceThreshold(0.0)
+    col1, col2 = st.columns(2)
 
-        try:
-            X = selector.fit_transform(X)
-            st.success("✅ Variance Applied")
-        except:
-            st.warning("⚠️ Variance too low — skipped")
+    # ---------------- SELECT METHOD ----------------
+    with col1:
+        method = st.selectbox(
+            "⚙️ Choose Method",
+            ["None", "Variance Threshold", "ANOVA", "Z-Score"]
+        )
 
-    elif method == "ANOVA":
-        X = SelectKBest(f_classif, k="all").fit_transform(X, y)
+    # ---------------- APPLY ----------------
+    with col2:
+        st.markdown("### 🚀 Apply Feature Selection")
 
+        if method == "None":
+            st.info("No Feature Selection Applied")
+
+        elif method == "Variance Threshold":
+            #from sklearn.feature_selection import VarianceThreshold
+        
+            try:
+                selector = VarianceThreshold(0.0)  # safer threshold
+                X = selector.fit_transform(X)
+        
+                if X.shape[1] == 0:
+                    st.warning("⚠️ All features removed due to low variance")
+                else:
+                    st.success("✅ Variance Applied")
+        
+            except Exception as e:
+                st.error(f"❌ Variance Threshold Error: {e}")
+
+        elif method == "ANOVA":
+            from sklearn.feature_selection import SelectKBest, f_classif
+            X = SelectKBest(f_classif, k="all").fit_transform(X, y)
+
+            st.success("✅ ANOVA Applied")
+
+        elif method == "Z-Score":
+            from sklearn.preprocessing import StandardScaler
+            scaler = StandardScaler()
+            X = scaler.fit_transform(X)
+
+            st.success("✅ Z-Score Applied")
+
+    # Save
+    if X is None or len(X) == 0:
+        st.error("❌ Feature selection resulted in empty dataset")
+        st.stop()
     st.session_state.X = X
     st.session_state.y = y
 
-    st.write("Shape:", X.shape)
+    st.markdown("""
+    <div style='padding:10px; border-radius:10px; background-color:#d1ecf1'>
+        <b>✨ Feature Selection Completed</b>
+    </div>
+    """, unsafe_allow_html=True)
 
+    st.write("📊 Final Shape:", X.shape)
 # =========================
-# STEP 6
+# STEP 6 SPLIT
 # =========================
 elif step == steps[5]:
 
-    if st.session_state.X is None or st.session_state.y is None:
-        st.warning("⚠️ Complete Feature Selection first")
-        st.stop()
+    X = st.session_state.X
+    y = st.session_state.y
+    st.markdown('<div class="card">✂️ Train-Test Split</div>', unsafe_allow_html=True)
 
+    test_size = st.slider("Test Size", 0.1, 0.5, 0.2)
+
+    if X is None or y is None:
+        st.error("❌ Data not ready. Complete previous steps.")
+        st.stop()
     X_train, X_test, y_train, y_test = train_test_split(
-        st.session_state.X, st.session_state.y, test_size=0.2)
+        X, y, test_size=test_size, random_state=42
+    )
 
     st.session_state.X_train = X_train
     st.session_state.X_test = X_test
     st.session_state.y_train = y_train
     st.session_state.y_test = y_test
 
-    st.success("Split done")
+    st.success("Split done ✅")
 
 # =========================
-# STEP 7
+# STEP 7 MODEL
 # =========================
 elif step == steps[6]:
 
-    problem = st.session_state.get("problem")
+    problem = st.session_state.problem
 
-    if problem is None:
-        st.warning("⚠️ Please select problem type first")
-        st.stop()
-
-    if st.session_state.problem == "Regression":
-        model = "Linear"
+    if problem == "Clustering":
+        model_name = st.selectbox("Model", ["KMeans", "DBSCAN"])
+    elif problem == "Regression":
+        model_name = st.selectbox("Model", ["Linear"])
     else:
-        model = st.selectbox("Model", ["Logistic", "SVM", "RandomForest"])
+        model_name = st.selectbox("Model", ["Logistic", "SVM", "RandomForest"])
 
-    st.session_state.model_name = model
+    st.session_state.model_name = model_name
 
 # =========================
-# STEP 8
+# STEP 8 TRAINING
 # =========================
 elif step == steps[7]:
 
-    if st.session_state.X_train is None:
-        st.warning("⚠️ Please split data first")
-        st.stop()
-
+    X_train = st.session_state.X_train
+    y_train = st.session_state.y_train
     model_name = st.session_state.model_name
 
+    if len(X_train) == 0:
+        st.error("❌ Training data is empty")
+        st.stop()
+
+    # Model create
     if model_name == "Logistic":
         model = LogisticRegression(max_iter=1000)
+
     elif model_name == "SVM":
         model = SVC()
+
     elif model_name == "RandomForest":
         model = RandomForestClassifier()
-    else:
+
+    elif model_name == "Linear":
         model = LinearRegression()
 
-    if st.button("Train"):
+    elif model_name == "KMeans":
+        model = KMeans(n_clusters=3)
 
-        model.fit(st.session_state.X_train, st.session_state.y_train)
+    elif model_name == "DBSCAN":
+        model = DBSCAN()
 
-        # ✅ CV FIX
-        y_train = st.session_state.y_train
-        k = 3
+    k = st.slider("K-Fold", 2, 5, 3)
 
-        if len(np.unique(y_train)) < k:
-            from sklearn.model_selection import KFold
-            cv = KFold(n_splits=k)
+    if st.button("🚀 Train Model"):
+
+        if model_name in ["KMeans", "DBSCAN"]:
+            model.fit(X_train)
+            st.success("Clustering done 🎉")
+            st.balloons()
+
         else:
-            if len(np.unique(y_train)) < k:
-                from sklearn.model_selection import KFold
-                cv = KFold(n_splits=k)
-            else:
-                cv = StratifiedKFold(n_splits=k)
-            
-            scores = cross_val_score(model, X_train, y_train, cv=cv)
+            model.fit(X_train, y_train)
 
-        st.success(f"Score: {scores.mean():.4f}")
+            from sklearn.model_selection import KFold
+
+            try:
+                if model_name == "Linear":
+                    cv = KFold(n_splits=k)
+                else:
+                    unique_classes = len(np.unique(y_train))
+            
+                    if unique_classes < k:
+                        cv = KFold(n_splits=k)
+                    else:
+                        cv = StratifiedKFold(n_splits=k)
+            
+                scores = cross_val_score(model, X_train, y_train, cv=cv)
+            
+                st.success(f"Accuracy: {scores.mean():.4f}")
+            
+            except Exception as e:
+                st.error(f"❌ Cross Validation Error: {e}")
+
+           # st.success(f"Accuracy: {scores.mean():.4f}")
+            st.balloons()
 
         st.session_state.model = model
 
 # =========================
-# STEP 9
+# STEP 9 METRICS
+# =========================
+# =========================
+# STEP 9 METRICS (FINAL)
+# =========================
+# =========================
+# STEP 9 → METRICS + REPORT
 # =========================
 elif step == steps[8]:
 
-    if st.session_state.X_test is None:
-        st.warning("⚠️ Please split data first")
+    # ✅ Safety check
+    if "model" not in st.session_state:
+        st.warning("⚠️ Please train model first")
         st.stop()
 
-    preds = st.session_state.model.predict(st.session_state.X_test)
+    model = st.session_state.model
+    model_name = st.session_state.model_name
 
-    from sklearn.metrics import accuracy_score
+    X_test = st.session_state.X_test
+    y_test = st.session_state.y_test
 
-    acc = accuracy_score(st.session_state.y_test, preds)
+    if st.button("📊 Evaluate Model"):
 
-    st.success(f"Accuracy: {acc:.2f}")
+        # -----------------------
+        # CLUSTERING
+        # -----------------------
+        if model_name in ["KMeans", "DBSCAN"]:
+            preds = model.fit_predict(X_test)
+
+            st.success("Clustering Done 🎉")
+            st.balloons()
+
+            st.write("Cluster Labels:", preds[:10])
+
+        # -----------------------
+        # REGRESSION
+        # -----------------------
+        elif model_name == "Linear":
+
+            preds = model.predict(X_test)
+
+            from sklearn.metrics import mean_squared_error, r2_score
+
+            mse = mean_squared_error(y_test, preds)
+            r2 = r2_score(y_test, preds)
+
+            st.success("Regression Metrics 🎯")
+            st.balloons()
+
+            metrics_df = pd.DataFrame({
+                "Metric": ["MSE", "R2 Score"],
+                "Value": [mse, r2]
+            })
+
+            st.table(metrics_df)
+
+            # 📥 Download
+            csv = metrics_df.to_csv(index=False).encode("utf-8")
+
+            st.download_button(
+                label="⬇️ Download Report",
+                data=csv,
+                file_name="regression_report.csv",
+                mime="text/csv"
+            )
+
+        # -----------------------
+        # CLASSIFICATION
+        # -----------------------
+        else:
+
+            preds = model.predict(X_test)
+
+            from sklearn.metrics import (
+                accuracy_score,
+                precision_score,
+                recall_score,
+                f1_score,
+                confusion_matrix
+            )
+
+            acc = accuracy_score(y_test, preds)
+            prec = precision_score(y_test, preds, average="weighted", zero_division=0)
+            rec = recall_score(y_test, preds, average="weighted", zero_division=0)
+            f1 = f1_score(y_test, preds, average="weighted", zero_division=0)
+
+            st.success("Classification Metrics 🎯")
+            st.balloons()
+
+            # 🔥 METRIC BOX UI
+            col1, col2, col3, col4 = st.columns(4)
+
+            col1.metric("Accuracy", f"{acc:.2f}")
+            col2.metric("Precision", f"{prec:.2f}")
+            col3.metric("Recall", f"{rec:.2f}")
+            col4.metric("F1 Score", f"{f1:.2f}")
+
+            # 📊 TABLE
+            metrics_df = pd.DataFrame({
+                "Metric": ["Accuracy", "Precision", "Recall", "F1 Score"],
+                "Value": [acc, prec, rec, f1]
+            })
+
+            st.subheader("📊 Metrics Table")
+            st.table(metrics_df)
+
+            # 📉 CONFUSION MATRIX
+            st.subheader("📉 Confusion Matrix")
+
+            cm = confusion_matrix(y_test, preds)
+
+            import seaborn as sns
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots()
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
+
+            st.pyplot(fig)
+
+            # 📥 DOWNLOAD REPORT
+            csv = metrics_df.to_csv(index=False).encode("utf-8")
+
+            st.download_button(
+                label="⬇️ Download Report",
+                data=csv,
+                file_name="classification_report.csv",
+                mime="text/csv"
+            )
