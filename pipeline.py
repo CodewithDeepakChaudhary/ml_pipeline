@@ -383,7 +383,7 @@ elif step == steps[5]:
 # =========================
 elif step == steps[6]:
 
-    problem = st.session_state.problem
+    problem = st.session_state.get("problem", None)
 
     if problem == "Clustering":
         model_name = st.selectbox("Model", ["KMeans", "DBSCAN"])
