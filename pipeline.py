@@ -13,6 +13,7 @@ from sklearn.cluster import KMeans, DBSCAN
 # =========================
 # ✅ SESSION STATE INIT (FIX)
 # =========================
+# ✅ SESSION STATE INIT
 defaults = {
     "data": None,
     "target": None,
@@ -26,9 +27,10 @@ defaults = {
     "model": None,
     "model_name": None
 }
-for k, v in defaults.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
+
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
 # =========================
 # 🎨 UI STYLE
@@ -94,7 +96,7 @@ elif step == steps[1]:
 elif step == steps[2]:
 
     if st.session_state.data is None:
-        st.warning("⚠️ Upload dataset first")
+        st.warning("⚠️ Please upload dataset first")
         st.stop()
 
     df = st.session_state.data
@@ -140,10 +142,12 @@ elif step == steps[4]:
 
     if method == "Variance":
         selector = VarianceThreshold(0.0)
+
         try:
             X = selector.fit_transform(X)
+            st.success("✅ Variance Applied")
         except:
-            st.warning("Variance issue")
+            st.warning("⚠️ Variance too low — skipped")
 
     elif method == "ANOVA":
         X = SelectKBest(f_classif, k="all").fit_transform(X, y)
@@ -158,8 +162,8 @@ elif step == steps[4]:
 # =========================
 elif step == steps[5]:
 
-    if st.session_state.X is None:
-        st.warning("⚠️ Do Feature Selection first")
+    if st.session_state.X is None or st.session_state.y is None:
+        st.warning("⚠️ Complete Feature Selection first")
         st.stop()
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -177,8 +181,10 @@ elif step == steps[5]:
 # =========================
 elif step == steps[6]:
 
-    if st.session_state.problem is None:
-        st.warning("⚠️ Select problem type first")
+    problem = st.session_state.get("problem")
+
+    if problem is None:
+        st.warning("⚠️ Please select problem type first")
         st.stop()
 
     if st.session_state.problem == "Regression":
@@ -194,7 +200,7 @@ elif step == steps[6]:
 elif step == steps[7]:
 
     if st.session_state.X_train is None:
-        st.warning("⚠️ Split data first")
+        st.warning("⚠️ Please split data first")
         st.stop()
 
     model_name = st.session_state.model_name
@@ -220,9 +226,13 @@ elif step == steps[7]:
             from sklearn.model_selection import KFold
             cv = KFold(n_splits=k)
         else:
-            cv = StratifiedKFold(n_splits=k)
-
-        scores = cross_val_score(model, st.session_state.X_train, y_train, cv=cv)
+            if len(np.unique(y_train)) < k:
+                from sklearn.model_selection import KFold
+                cv = KFold(n_splits=k)
+            else:
+                cv = StratifiedKFold(n_splits=k)
+            
+            scores = cross_val_score(model, X_train, y_train, cv=cv)
 
         st.success(f"Score: {scores.mean():.4f}")
 
@@ -233,8 +243,8 @@ elif step == steps[7]:
 # =========================
 elif step == steps[8]:
 
-    if st.session_state.model is None:
-        st.warning("⚠️ Train model first")
+    if st.session_state.X_test is None:
+        st.warning("⚠️ Please split data first")
         st.stop()
 
     preds = st.session_state.model.predict(st.session_state.X_test)
