@@ -464,12 +464,21 @@ elif step == steps[7]:
             try:
                 if model_name == "Linear":
                     cv = KFold(n_splits=k)
-                else:
-                    unique_classes = len(np.unique(y_train))
             
-                    if unique_classes < k:
-                        cv = KFold(n_splits=k)
+                else:
+                    class_counts = pd.Series(y_train).value_counts()
+                    min_class_samples = class_counts.min()
+            
+                    # ❗ CRITICAL FIX
+                    if min_class_samples < 2:
+                        st.warning("⚠️ Some classes have only 1 sample → Using KFold instead of StratifiedKFold")
+                        cv = KFold(n_splits=2)
+            
                     else:
+                        if k > min_class_samples:
+                            st.warning(f"⚠️ Reduced folds to {min_class_samples}")
+                            k = min_class_samples
+            
                         cv = StratifiedKFold(n_splits=k)
             
                 scores = cross_val_score(model, X_train, y_train, cv=cv)
