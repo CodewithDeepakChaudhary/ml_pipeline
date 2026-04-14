@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold, KFold
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.feature_selection import VarianceThreshold, SelectKBest, f_classif
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
@@ -189,7 +189,7 @@ elif step == steps[1]:
     if file:
         df = pd.read_csv(file)
     else:
-        df = pd.read_csv("Location_Wise_Student_Data.csv")
+        df = pd.read_csv("Location_Wise_Student_Data (1).csv")
 
     st.session_state.data = df
 
@@ -433,15 +433,14 @@ elif step == steps[7]:
 
         else:
             model.fit(X_train, y_train)
-            #from sklearn.model_selection import KFold, StratifiedKFold
-            k = min(k, len(y_train))  # prevent crash
-            
-            if len(set(y_train)) < 20:
-                cv = StratifiedKFold(n_splits=k)
-            else:
-                cv = KFold(n_splits=k, shuffle=True, random_state=42)
-            
+
+            cv = StratifiedKFold(n_splits=k)
             scores = cross_val_score(model, X_train, y_train, cv=cv)
+
+            st.success(f"Accuracy: {scores.mean():.4f}")
+            st.balloons()
+
+        st.session_state.model = model
 
 # =========================
 # STEP 9 METRICS
