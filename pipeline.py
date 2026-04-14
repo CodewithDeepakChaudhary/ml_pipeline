@@ -371,6 +371,55 @@ elif step == steps[4]:
     if X is None or len(X) == 0:
         st.error("❌ Feature selection resulted in empty dataset")
         st.stop()
+
+        # =========================
+    # 🤖 AUTO DATA FIX ENGINE
+    # =========================
+    
+    problem = st.session_state.problem
+    
+    # Convert to pandas for safety
+    X = pd.DataFrame(X)
+    y = pd.Series(y)
+    
+    # -------- CLASSIFICATION FIX --------
+    if problem != "Regression":
+    
+        class_counts = y.value_counts()
+        min_class = class_counts.min()
+    
+        # ❌ Case 1: Only one class
+        if len(class_counts) < 2:
+            st.error("❌ Dataset has only one class. Cannot train model.")
+            st.stop()
+    
+        # ⚠️ Case 2: Rare classes (<=1 sample)
+        rare_classes = class_counts[class_counts <= 1].index
+    
+        if len(rare_classes) > 0:
+            st.warning(f"⚠️ Removing {len(rare_classes)} rare class(es) with ≤1 sample")
+    
+            mask = ~y.isin(rare_classes)
+            X = X[mask]
+            y = y[mask]
+    
+        # ⚠️ Case 3: Too many unique classes (looks like regression)
+        if len(class_counts) > 0.5 * len(y):
+            st.warning("⚠️ Too many unique target values → switching to Regression")
+    
+            st.session_state.problem = "Regression"
+            y = pd.to_numeric(y, errors='coerce')
+            y = y.fillna(y.mean())
+    
+    # -------- REGRESSION FIX --------
+    else:
+        y = pd.to_numeric(y, errors='coerce')
+        y = y.fillna(y.mean())
+    
+    # Final safety
+    if len(X) == 0:
+        st.error("❌ No data left after cleaning")
+        st.stop()
     st.session_state.X = X
     st.session_state.y = y
 
