@@ -335,7 +335,7 @@ elif step == steps[4]:
             #from sklearn.feature_selection import VarianceThreshold
         
             try:
-                selector = VarianceThreshold(0.0)
+                selector = VarianceThreshold(0.01)
                 X_new = selector.fit_transform(X)
                 
                 if X_new.shape[1] == 0:
