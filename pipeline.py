@@ -209,6 +209,28 @@ elif step == steps[2]:
     st.dataframe(df.head())
     st.write(df.describe())
 
+    # =========================
+    # 🔥 CORRELATION HEATMAP
+    # =========================
+    
+    st.subheader("🔥 Correlation Heatmap")
+    
+    # Select only numeric columns
+    num_df = df.select_dtypes(include=np.number)
+    
+    if num_df.shape[1] < 2:
+        st.warning("⚠️ Not enough numeric columns for correlation heatmap")
+    else:
+        corr = num_df.corr()
+    
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+    
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f", ax=ax)
+    
+        st.pyplot(fig)
+
 # =========================
 # STEP 4 CLEANING
 # =========================
