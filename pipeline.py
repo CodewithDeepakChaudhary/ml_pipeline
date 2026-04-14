@@ -208,14 +208,12 @@ elif step == steps[2]:
 
     st.dataframe(df.head())
     st.write(df.describe())
-
     # =========================
     # 🔥 CORRELATION HEATMAP
     # =========================
     
     st.subheader("🔥 Correlation Heatmap")
     
-    # Select only numeric columns
     num_df = df.select_dtypes(include=np.number)
     
     if num_df.shape[1] < 2:
@@ -223,14 +221,16 @@ elif step == steps[2]:
     else:
         corr = num_df.corr()
     
-        import matplotlib.pyplot as plt
-        import seaborn as sns
+        import plotly.express as px
     
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f", ax=ax)
+        fig = px.imshow(
+            corr,
+            text_auto=True,
+            aspect="auto",
+            color_continuous_scale='RdBu_r'
+        )
     
-        st.pyplot(fig)
-
+        st.plotly_chart(fig)
 # =========================
 # STEP 4 CLEANING
 # =========================
