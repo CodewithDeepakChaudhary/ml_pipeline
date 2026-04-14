@@ -434,31 +434,10 @@ elif step == steps[7]:
         else:
             model.fit(X_train, y_train)
 
-            # ✅ FIX STARTS HERE
-            from sklearn.model_selection import StratifiedKFold, KFold
-            import numpy as np
+            cv = StratifiedKFold(n_splits=k)
+            scores = cross_val_score(model, X_train, y_train, cv=cv)
 
-            # Count samples per class
-            unique, counts = np.unique(y_train, return_counts=True)
-            min_samples = counts.min()
-
-            # Adjust k safely
-            safe_k = min(k, min_samples)
-
-            if safe_k < 2:
-                st.warning("⚠️ Not enough data for cross-validation. Using training score.")
-                score = model.score(X_train, y_train)
-                scores = [score]
-            else:
-                # Use correct CV method
-                if model_name == "Linear":
-                    cv = KFold(n_splits=safe_k)
-                else:
-                    cv = StratifiedKFold(n_splits=safe_k)
-
-                scores = cross_val_score(model, X_train, y_train, cv=cv)
-
-            st.success(f"Score: {np.mean(scores):.4f}")
+            st.success(f"Accuracy: {scores.mean():.4f}")
             st.balloons()
 
         st.session_state.model = model
