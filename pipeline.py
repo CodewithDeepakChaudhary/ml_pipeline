@@ -588,7 +588,7 @@ elif step == steps[8]:
     "y_test": None,
     "model": None,
     "model_name": None
-}
+
 
 for key, value in defaults.items():
     if key not in st.session_state:
