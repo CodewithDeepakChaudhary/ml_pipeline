@@ -335,12 +335,13 @@ elif step == steps[4]:
             #from sklearn.feature_selection import VarianceThreshold
         
             try:
-                selector = VarianceThreshold(0.0)  # safer threshold
-                X = selector.fit_transform(X)
-        
-                if X.shape[1] == 0:
+                selector = VarianceThreshold(0.0)
+                X_new = selector.fit_transform(X)
+                
+                if X_new.shape[1] == 0:
                     st.warning("⚠️ All features removed due to low variance")
                 else:
+                    X = X_new
                     st.success("✅ Variance Applied")
         
             except Exception as e:
