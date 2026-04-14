@@ -288,11 +288,26 @@ elif step == steps[3]:
                 Q3 = num_df.quantile(0.75)
                 IQR = Q3 - Q1
 
-                mask = ~((num_df < (Q1 - 1.5 * IQR)) | (num_df > (Q3 + 1.5 * IQR))).any(axis=1)
+                # Count how many columns mark row as outlier
+                outlier_condition = ((num_df < (Q1 - 1.5 * IQR)) | (num_df > (Q3 + 1.5 * IQR)))
+                
+                # Allow some tolerance (not strict removal)
+                threshold = int(0.3 * num_df.shape[1])  # 30% columns
+                
+                mask = outlier_condition.sum(axis=1) <= threshold
+                
+                # Safety check
+                if mask.sum() < len(df) * 0.2:
+                    st.warning("⚠️ Too many rows would be removed. Skipping outlier removal.")
+                else:
+                    df = df[mask]
+                    # ✅ ADD THIS HERE (exact position)
+                    if df.shape[0] == 0:
+                        st.error("❌ All rows removed! Try disabling outlier removal.")
+                        st.stop()
+                    st.success("✅ Outliers Removed Safely")
 
-                df = df[mask]
-
-                st.success("✅ Outliers Removed Successfully")
+               # st.success("✅ Outliers Removed Successfully")
 
     # ✅ SAVE BACK (VERY IMPORTANT)
     st.session_state.data = df
