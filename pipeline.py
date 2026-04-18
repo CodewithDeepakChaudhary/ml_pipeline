@@ -189,7 +189,7 @@ elif step == steps[1]:
     if file:
         df = pd.read_csv(file)
     else:
-        df = pd.read_csv("Location_Wise_Student_Data.csv")
+        df = pd.read_csv("global_placement.csv")
 
     st.session_state.data = df
 
